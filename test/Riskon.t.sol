@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Riskon} from "../src/core/Riskon.sol";
+import {Riskon} from "../src/Riskon.sol";
 
 /**
  * @title RiskonBasic

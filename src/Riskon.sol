@@ -31,15 +31,15 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
     struct Market {
         uint256 id;
-        string symbol; // e.g., "STT/USDC", "WBTC/USDC"
-        string name; // e.g., "Somnia Token", "Wrapped Bitcoin"
+        string symbol;
+        string name;
         bool isActive;
-        uint256 minBetAmount; // Market-specific minimum bet
-        uint256 currentRoundId; // Current round for this market
+        uint256 minBetAmount;
+        uint256 currentRoundId;
     }
 
     struct Round {
-        uint256 marketId; // Which market this round belongs to
+        uint256 marketId;
         uint256 id;
         uint256 startTime;
         uint256 endTime;
@@ -48,14 +48,14 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
         uint256 totalNo;
         mapping(address => Bet) bets;
         bool resolved;
-        bool outcome; // true = yes (price above target), false = no (price below target)
+        bool outcome;
         uint256 finalPrice;
-        address[] bettors; // Track all bettors for this round
+        address[] bettors;
     }
 
     struct Bet {
         uint256 amount;
-        bool prediction; // true = yes, false = no
+        bool prediction;
         bool claimed;
     }
 
@@ -152,7 +152,6 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(RESOLVER_ROLE, msg.sender);
 
-        // Initialize default markets
         _addMarket("BTC/USD", "Bitcoin", 0.01 ether);
         _addMarket("ETH/USD", "Ethereum", 0.01 ether);
         _addMarket("SOL/USD", "Solana", 0.01 ether);
@@ -186,7 +185,7 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Delete a market. Can only delete inactive markets with no active or unresolved rounds.
+     * @notice Delete a market.
      * @param _marketId Market ID to delete
      */
     function deleteMarket(uint256 _marketId) external onlyRole(ADMIN_ROLE) {
@@ -196,12 +195,10 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
         Market storage market = markets[_marketId];
 
-        // Check if market is inactive
         if (market.isActive) {
             revert MarketHasActiveRound();
         }
 
-        // Check if current round is resolved
         if (market.currentRoundId > 0) {
             Round storage currentRound = rounds[_marketId][
                 market.currentRoundId
@@ -213,7 +210,6 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
         string memory symbol = market.symbol;
 
-        // Delete market data
         delete markets[_marketId];
 
         emit MarketDeleted(_marketId, symbol);
@@ -238,7 +234,6 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
         Market storage market = markets[_marketId];
 
-        // Resolve previous round if not resolved
         if (
             market.currentRoundId > 0 &&
             !rounds[_marketId][market.currentRoundId].resolved
@@ -289,7 +284,6 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
             revert RoundAlreadyResolved();
         }
 
-        // If user already has a bet in this round, add to it
         if (round.bets[msg.sender].amount == 0) {
             round.bettors.push(msg.sender);
         }
@@ -313,7 +307,7 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Resolve a round using API-provided price (called by backend)
+     * @notice Resolve a round
      * @param _marketId Market ID
      * @param _roundId The round ID to resolve
      * @param _finalPrice Final price from API
@@ -361,7 +355,6 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
         userBet.claimed = true;
 
-        // Calculate winnings
         uint256 winnings = _calculateWinnings(_marketId, _roundId, msg.sender);
 
         if (winnings == 0) {
@@ -370,7 +363,6 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
         emit WinningsClaimed(_marketId, _roundId, msg.sender, winnings);
 
-        // Transfer winnings
         (bool success, ) = payable(msg.sender).call{value: winnings}("");
         if (!success) {
             revert TransferFailed();
@@ -657,12 +649,10 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
             revert RoundNotActive();
         }
 
-        // Use provided final price from API
         round.resolved = true;
         round.finalPrice = _finalPrice;
         round.outcome = _finalPrice >= round.priceTarget;
 
-        // Calculate and collect protocol fees
         uint256 totalPool = round.totalYes + round.totalNo;
         if (totalPool > 0) {
             uint256 protocolFee = (totalPool * PROTOCOL_FEE) / FEE_DENOMINATOR;
@@ -706,11 +696,9 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
             return 0;
         }
 
-        // Calculate protocol fee
         uint256 protocolFee = (totalPool * PROTOCOL_FEE) / FEE_DENOMINATOR;
         uint256 prizePool = totalPool - protocolFee;
 
-        // Calculate user's share of the prize pool
         return (userBet.amount * prizePool) / winningPool;
     }
 
@@ -726,7 +714,5 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
         }
     }
 
-    receive() external payable {
-        // Allow contract to receive ETH
-    }
+    receive() external payable {}
 }

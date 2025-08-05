@@ -110,7 +110,7 @@ export async function resolveRound(
   finalPrice: number
 }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/cron/rounds/resolve`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/rounds/resolve`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ export async function autoResolveAllRounds(): Promise<{
 }> {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/cron/rounds/resolve/auto`,
+      `${API_BASE_URL}/api/admin/rounds/resolve/auto`,
       {
         method: 'PUT',
       },
@@ -190,7 +190,7 @@ export async function startNewRound(
   priceTarget: string
 }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/cron/rounds/start`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/rounds/start`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

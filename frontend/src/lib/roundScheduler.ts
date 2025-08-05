@@ -17,13 +17,14 @@ export interface SchedulerConfig {
   priceTargets: Record<string, () => Promise<number>> // Functions to calculate price targets
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 /**
  * Default price target calculators
  */
 const defaultPriceTargets = {
   'BTC/USD': async (): Promise<number> => {
     try {
-      const response = await fetch('/api/prices?symbol=BTC/USD')
+      const response = await fetch(`${API_BASE_URL}/api/prices?symbol=BTC/USD`)
       if (!response.ok) {
         throw new Error(`Failed to fetch BTC price: ${response.statusText}`)
       }
@@ -40,7 +41,7 @@ const defaultPriceTargets = {
 
   'ETH/USD': async (): Promise<number> => {
     try {
-      const response = await fetch('/api/prices?symbol=ETH/USD')
+      const response = await fetch(`${API_BASE_URL}/api/prices?symbol=ETH/USD`)
       if (!response.ok) {
         throw new Error(`Failed to fetch ETH price: ${response.statusText}`)
       }
@@ -57,7 +58,7 @@ const defaultPriceTargets = {
 
   'SOL/USD': async (): Promise<number> => {
     try {
-      const response = await fetch('/api/prices?symbol=SOL/USD')
+      const response = await fetch(`${API_BASE_URL}/api/prices?symbol=SOL/USD`)
       if (!response.ok) {
         throw new Error(`Failed to fetch SOL price: ${response.statusText}`)
       }

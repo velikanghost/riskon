@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
-import "../src/core/Riskon.sol";
+import "../src/Riskon.sol";
 
 /**
  * @title DeployRiskon
