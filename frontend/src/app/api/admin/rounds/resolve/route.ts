@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { somniaTestnet } from 'viem/chains'
 import { riskonAbi } from '@/lib/contracts-generated'
 import { PYTH_FEEDS, HERMES_API_BASE, formatPythPrice } from '@/lib/pythConfig'
+import { updateRoundResolution } from '@/lib/databaseSync'
 
 // Contract configuration
 const RISKON_ADDRESS = process.env.NEXT_PUBLIC_RISKON_ADDRESS as `0x${string}`
@@ -128,6 +129,9 @@ export async function POST(request: NextRequest) {
 
     // Wait for transaction confirmation
     const receipt = await publicClient.waitForTransactionReceipt({ hash })
+
+    // Sync resolution data to database
+    await updateRoundResolution(marketId, roundId, priceWei)
 
     console.log(`Round resolved successfully. Transaction: ${hash}`)
 

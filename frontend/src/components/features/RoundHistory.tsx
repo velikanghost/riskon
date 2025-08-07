@@ -4,80 +4,11 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-
-interface HistoricalRound {
-  id: number
-  startTime: number
-  endTime: number
-  priceTarget: string
-  finalPrice: string
-  totalYes: string
-  totalNo: string
-  outcome: boolean
-  resolved: true
-}
-
-// Mock historical data - in real app this would come from blockchain/backend
-const mockHistoricalRounds: HistoricalRound[] = [
-  {
-    id: 5,
-    startTime: Date.now() - 600000, // 10 mins ago
-    endTime: Date.now() - 300000, // 5 mins ago
-    priceTarget: '3000.00',
-    finalPrice: '3025.50',
-    totalYes: '2.5',
-    totalNo: '1.8',
-    outcome: true,
-    resolved: true,
-  },
-  {
-    id: 4,
-    startTime: Date.now() - 900000, // 15 mins ago
-    endTime: Date.now() - 600000, // 10 mins ago
-    priceTarget: '3050.00',
-    finalPrice: '3020.75',
-    totalYes: '3.2',
-    totalNo: '2.1',
-    outcome: false,
-    resolved: true,
-  },
-  {
-    id: 3,
-    startTime: Date.now() - 1200000, // 20 mins ago
-    endTime: Date.now() - 900000, // 15 mins ago
-    priceTarget: '2980.00',
-    finalPrice: '3010.25',
-    totalYes: '1.9',
-    totalNo: '2.7',
-    outcome: true,
-    resolved: true,
-  },
-  {
-    id: 2,
-    startTime: Date.now() - 1500000, // 25 mins ago
-    endTime: Date.now() - 1200000, // 20 mins ago
-    priceTarget: '3100.00',
-    finalPrice: '3085.00',
-    totalYes: '4.1',
-    totalNo: '1.5',
-    outcome: false,
-    resolved: true,
-  },
-  {
-    id: 1,
-    startTime: Date.now() - 1800000, // 30 mins ago
-    endTime: Date.now() - 1500000, // 25 mins ago
-    priceTarget: '3000.00',
-    finalPrice: '3150.00',
-    totalYes: '2.8',
-    totalNo: '3.2',
-    outcome: true,
-    resolved: true,
-  },
-]
+import { useMarketHistory, type MarketRound } from '@/hooks/useMarketHistory'
+import { Loader2 } from 'lucide-react'
 
 interface RoundCardProps {
-  round: HistoricalRound
+  round: MarketRound
 }
 
 function RoundCard({ round }: RoundCardProps) {
@@ -89,7 +20,7 @@ function RoundCard({ round }: RoundCardProps) {
   const priceDiff = final - target
   const priceDiffPercentage = ((Math.abs(priceDiff) / target) * 100).toFixed(2)
 
-  const timeAgo = Math.floor((Date.now() - round.endTime) / 60000) // minutes ago
+  const timeAgo = Math.floor((Date.now() - round.endTime * 1000) / 60000) // minutes ago
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -180,9 +111,14 @@ function RoundCard({ round }: RoundCardProps) {
   )
 }
 
-export function RoundHistory() {
+interface RoundHistoryProps {
+  marketId: number
+  symbol?: string
+}
+
+export function RoundHistory({ marketId, symbol }: RoundHistoryProps) {
   const [displayCount, setDisplayCount] = useState(5)
-  const [rounds] = useState(mockHistoricalRounds)
+  const { rounds, loading, error } = useMarketHistory(marketId, 20) // Fetch up to 20 rounds
 
   const loadMore = () => {
     setDisplayCount((prev) => Math.min(prev + 5, rounds.length))
@@ -197,6 +133,56 @@ export function RoundHistory() {
   const noWins = totalRounds - yesWins
   const yesWinRate =
     totalRounds > 0 ? ((yesWins / totalRounds) * 100).toFixed(1) : '0'
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4 text-center">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-8 bg-gray-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Rounds</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading round history...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Rounds</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center text-muted-foreground py-8">
+              <div className="text-lg font-medium mb-2">
+                Error Loading History
+              </div>
+              <div className="text-sm">{error}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -235,7 +221,7 @@ export function RoundHistory() {
       {/* Round History */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Rounds</CardTitle>
+          <CardTitle>Recent Rounds {symbol && `- ${symbol}`}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {visibleRounds.length > 0 ? (

@@ -45,3 +45,5 @@ next-env.d.ts
 PROJECT_COMPLETE.md
 notes.txt
 api_calls.txt
+
+/src/generated/prisma
