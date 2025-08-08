@@ -58,7 +58,7 @@ export function useUserStats() {
     try {
       const allBets: UserBet[] = []
       let totalWinnings = 0n
-      let totalLosses = 0n
+      const totalLosses = 0n
       let totalWagered = 0n
       let wins = 0
       let losses = 0
