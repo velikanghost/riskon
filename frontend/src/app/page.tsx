@@ -9,6 +9,9 @@ import { UserDashboard } from '@/components/features/UserDashboard'
 
 export default function HomePage() {
   const selectedTab = useAppSelector((state) => state.ui.selectedTab)
+  const selectedMarketId = useAppSelector(
+    (state) => state.market?.selectedMarketId,
+  )
 
   const renderContent = () => {
     switch (selectedTab) {
@@ -17,7 +20,7 @@ export default function HomePage() {
       case 'current':
         return <RoundDisplay />
       case 'history':
-        return <RoundHistory />
+        return <RoundHistory marketId={Number(selectedMarketId ?? 1)} />
       case 'dashboard':
         return <UserDashboard />
       default:

@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
  * GET /api/markets/[marketId]
  * Get specific market details with current round information
  */
-export async function GET_MARKET_BY_ID(marketId: number) {
+async function getMarketByIdInternal(marketId: number) {
   try {
     if (!RISKON_ADDRESS) {
       throw new Error('Contract address not configured')

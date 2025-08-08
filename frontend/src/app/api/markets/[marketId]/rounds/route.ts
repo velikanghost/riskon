@@ -13,10 +13,10 @@ const publicClient = createPublicClient({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { marketId: string } },
+  { params }: { params: Promise<{ marketId: string }> },
 ) {
   try {
-    const { marketId } = params
+    const { marketId } = await params
 
     const roundData = await publicClient.readContract({
       address: process.env.NEXT_PUBLIC_RISKON_ADDRESS as `0x${string}`,

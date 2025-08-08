@@ -14,10 +14,10 @@ const publicClient = createPublicClient({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { marketId: string; roundId: string } },
+  context: { params: Promise<{ marketId: string; roundId: string }> },
 ) {
   try {
-    const { marketId, roundId } = params
+    const { marketId, roundId } = await context.params
 
     const outcomeData = await publicClient.readContract({
       address: process.env.NEXT_PUBLIC_RISKON_ADDRESS as `0x${string}`,
@@ -26,7 +26,11 @@ export async function GET(
       args: [BigInt(marketId), BigInt(roundId)],
     })
 
-    const [resolved, outcome, finalPrice] = outcomeData
+    const [resolved, outcome, finalPrice] = outcomeData as [
+      boolean,
+      boolean,
+      bigint,
+    ]
 
     return NextResponse.json({
       success: true,
