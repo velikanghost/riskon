@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Market {
+  id        Int      @id @default(autoincrement())
+  marketId  Int      @unique // Blockchain market ID
+  symbol    String   // e.g., "BTC/USD"
+  name      String   // e.g., "Bitcoin"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rounds Round[]
+
+  @@map("markets")
+}
+
+model Round {
+  id          Int      @id @default(autoincrement())
+  marketId    Int      // Blockchain market ID
+  roundId     Int      // Blockchain round ID
+  startTime   BigInt   // Unix timestamp
+  endTime     BigInt   // Unix timestamp
+  priceTarget String   // 8 decimals, e.g., "300000000000" for $3000
+  finalPrice  String?  // 8 decimals, null if not resolved
+  totalYes    String   // 18 decimals, e.g., "1000000000000000000" for 1 ETH
+  totalNo     String   // 18 decimals
+  resolved    Boolean  @default(false)
+  outcome     Boolean? // true = YES won, false = NO won, null if not resolved
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  market Market @relation(fields: [marketId], references: [marketId])
+
+  @@unique([marketId, roundId])
+  @@map("rounds")
+}
+
+model UserBet {
+  id         Int      @id @default(autoincrement())
+  marketId   Int      // Blockchain market ID
+  roundId    Int      // Blockchain round ID
+  userAddress String  // User's wallet address
+  amount     String   // 18 decimals
+  prediction Boolean  // true = YES, false = NO
+  claimed    Boolean  @default(false)
+  winnings   String?  // 18 decimals, null if not won
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([marketId, roundId, userAddress])
+  @@map("user_bets")
+}
