@@ -18,7 +18,6 @@ export function Header({ className }: HeaderProps) {
   const tabs: { key: TabType; label: string; badge?: string }[] = [
     { key: 'markets', label: 'Markets' },
     { key: 'current', label: 'Current Round' },
-    { key: 'history', label: 'History' },
     { key: 'dashboard', label: 'Dashboard', badge: 'My Bets' },
   ]
 

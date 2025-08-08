@@ -16,6 +16,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { toast } from 'sonner'
 import { useWriteRiskonClaimWinnings } from '@/lib/contracts-generated'
 import { RISKON_ADDRESS } from '@/lib/wagmi'
+import { Loader2 } from 'lucide-react'
 
 interface UserStatsCardProps {
   title: string
@@ -104,14 +105,14 @@ function BetRow({ marketId, roundId, userAddress }: BetRowProps) {
         >
           {bet.prediction ? 'YES' : 'NO'}
         </Badge>
-        <span className="text-sm font-medium">{betAmount.toFixed(4)} SOM</span>
+        <span className="text-sm font-medium">{betAmount.toFixed(4)} STT</span>
       </div>
 
       <div className="flex items-center space-x-3">
         {hasWinnings && (
           <>
             <span className="text-sm text-green-600 font-medium">
-              +{winningsAmount.toFixed(4)} SOM
+              +{winningsAmount.toFixed(4)} STT
             </span>
             <Button
               size="sm"
@@ -161,16 +162,12 @@ export function UserDashboard() {
 
   if (isLoadingStats) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <div className="space-y-4">
-            <div className="text-xl font-medium">Loading Your Stats...</div>
-            <div className="text-muted-foreground">
-              Fetching your betting history and statistics
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid min-h-[60vh] place-items-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 size={40} className="animate-spin" />
+          <div className="text-muted-foreground">Loading your stats...</div>
+        </div>
+      </div>
     )
   }
 
@@ -191,7 +188,7 @@ export function UserDashboard() {
         />
         <UserStatsCard
           title="Total Winnings"
-          value={`${parseFloat(stats.totalWinnings).toFixed(2)} SOM`}
+          value={`${parseFloat(stats.totalWinnings).toFixed(2)} STT`}
           subtitle="Lifetime earnings"
           className="bg-blue-50 border-blue-200"
         />
@@ -213,7 +210,7 @@ export function UserDashboard() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Wagered:</span>
               <span className="font-medium">
-                {parseFloat(stats.totalWagered).toFixed(2)} SOM
+                {parseFloat(stats.totalWagered).toFixed(2)} STT
               </span>
             </div>
             <div className="flex justify-between">
@@ -225,12 +222,14 @@ export function UserDashboard() {
                     : 'text-red-600'
                 }`}
               >
-                {parseFloat(stats.netProfit).toFixed(2)} SOM
+                {parseFloat(stats.netProfit).toFixed(2)} STT
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Average Bet:</span>
-              <span className="font-medium">{stats.averageBet} SOM</span>
+              <span className="font-medium">
+                {parseFloat(stats.averageBet).toFixed(2)} STT
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Best Streak:</span>
@@ -339,7 +338,7 @@ export function UserDashboard() {
               <div className="text-2xl mb-2">💰</div>
               <div className="text-sm font-medium">Big Winner</div>
               <div className="text-xs text-muted-foreground">
-                1+ SOM winnings
+                1+ STT winnings
               </div>
             </div>
           </div>

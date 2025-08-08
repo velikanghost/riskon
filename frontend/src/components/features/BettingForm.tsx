@@ -170,10 +170,10 @@ export function BettingForm({
         {/* Bet Amount */}
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <Label className="text-sm font-medium">Bet Amount (SOM)</Label>
+            <Label className="text-sm font-medium">Bet Amount (STT)</Label>
             {balance && (
               <div className="text-xs text-muted-foreground">
-                Balance: {parseFloat(formatEther(balance.value)).toFixed(4)} SOM
+                Balance: {parseFloat(formatEther(balance.value)).toFixed(4)} STT
               </div>
             )}
           </div>
@@ -256,7 +256,7 @@ export function BettingForm({
                 </div>
                 <div className="flex justify-between">
                   <span>Amount:</span>
-                  <span className="font-medium">{betAmount} SOM</span>
+                  <span className="font-medium">{betAmount} STT</span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Potential Return:</span>

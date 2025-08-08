@@ -332,14 +332,3 @@ export class RoundScheduler {
 
 // Default scheduler instance
 export const defaultRoundScheduler = new RoundScheduler()
-
-// Auto-start in production (you might want to make this configurable)
-if (
-  process.env.NODE_ENV === 'production' &&
-  process.env.ENABLE_AUTO_SCHEDULER !== 'false'
-) {
-  // Start after a short delay to let the app initialize
-  setTimeout(() => {
-    defaultRoundScheduler.start()
-  }, 5000)
-}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { useMarketPrice } from '@/hooks/useMarkets'
 import { formatPriceDecimals } from '@/lib/helpers'
@@ -94,7 +93,7 @@ export function PriceDisplay({
         {/* Current Price */}
         <div className="text-center">
           <div className="text-sm text-muted-foreground mb-1">
-            Current ETH Price
+            Current {marketSymbol.split('/')[0]} Price
           </div>
           <div
             className={`text-3xl font-bold font-mono transition-colors duration-300 ${priceColorClass}`}
@@ -111,52 +110,6 @@ export function PriceDisplay({
               {formatPriceDecimals(difference)} ({percentageDiff}%)
             </div>
           )}
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-border"></div>
-
-        {/* Target Price */}
-        <div className="text-center">
-          <div className="text-sm text-muted-foreground mb-1">Target Price</div>
-          <div className="text-xl font-bold font-mono">
-            ${target.toFixed(2)}
-          </div>
-        </div>
-
-        {/* Price Status */}
-        <div className="flex justify-center">
-          <Badge
-            variant={isAboveTarget ? 'default' : 'secondary'}
-            className={`${
-              isAboveTarget
-                ? 'bg-green-500 hover:bg-green-600 text-white'
-                : 'bg-red-500 hover:bg-red-600 text-white'
-            }`}
-          >
-            {isAboveTarget
-              ? `$${difference.toFixed(2)} ABOVE`
-              : `$${difference.toFixed(2)} BELOW`}{' '}
-            TARGET
-          </Badge>
-        </div>
-
-        {/* Visual Indicator */}
-        <div className="relative">
-          <div className="h-2 bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all duration-500 ${
-                isAboveTarget ? 'bg-green-500' : 'bg-red-500'
-              }`}
-              style={{
-                width: `${Math.min(100, (difference / target) * 100 * 10)}%`,
-              }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>Target</span>
-            <span>Current</span>
-          </div>
         </div>
       </div>
     </Card>

@@ -12,32 +12,56 @@ import { BettingForm } from './BettingForm'
 import { formatEther } from 'viem'
 import { useAppDispatch } from '@/hooks/useRedux'
 import { setSelectedTab } from '@/store/slices/uiSlice'
+import { useMarkets } from '@/hooks/useMarkets'
+import { formatUSDUnits } from '@/lib/helpers'
 
 export function RoundDisplay() {
   const dispatch = useAppDispatch()
   const { address } = useAccount()
-  const { selectedMarketId, selectedMarketSymbol } = useAppSelector(
+  const { markets, selectedMarketId, selectedMarketSymbol } = useAppSelector(
     (state) => state.market,
   )
+  const { selectMarket } = useMarkets()
 
   const marketId = BigInt(selectedMarketId || 1)
   const { round, isLoading, error } = useCurrentRound(marketId)
   const { bet: userBet } = useUserBet(marketId, BigInt(round?.id || 0), address)
 
-  // If no market is selected, show market selection prompt
+  // Quick market switcher
+  const MarketSwitcher = () => (
+    <div className="flex items-center justify-center gap-3">
+      <span className="text-sm text-muted-foreground">Market:</span>
+      <select
+        className="border rounded px-3 py-1 text-sm bg-background"
+        value={selectedMarketSymbol || ''}
+        onChange={(e) => selectMarket(e.target.value as any)}
+      >
+        <option value="" disabled>
+          Select market
+        </option>
+        {markets.map((m) => (
+          <option key={m.id} value={m.symbol as any}>
+            {m.symbol}
+          </option>
+        ))}
+      </select>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => dispatch(setSelectedTab('markets'))}
+      >
+        View All
+      </Button>
+    </div>
+  )
+
   if (!selectedMarketId || !selectedMarketSymbol) {
     return (
       <Card>
-        <CardContent className="p-8 text-center">
-          <div className="space-y-4">
-            <div className="text-6xl">🎯</div>
-            <h2 className="text-2xl font-bold">Select a Market</h2>
-            <p className="text-muted-foreground">
-              Choose a prediction market to start betting
-            </p>
-            <Button onClick={() => dispatch(setSelectedTab('markets'))}>
-              Go to Markets
-            </Button>
+        <CardContent className="p-8 text-center space-y-4">
+          <MarketSwitcher />
+          <div className="text-muted-foreground">
+            Choose a prediction market to start betting
           </div>
         </CardContent>
       </Card>
@@ -63,8 +87,9 @@ export function RoundDisplay() {
   if (error || !round) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <div className="text-red-500 mb-2">⚠️ Error Loading Round</div>
+        <CardContent className="p-6 text-center space-y-3">
+          <MarketSwitcher />
+          <div className="text-red-500">⚠️ Error Loading Round</div>
           <p className="text-muted-foreground">
             {error?.message || 'Unable to load current round data'}
           </p>
@@ -86,8 +111,9 @@ export function RoundDisplay() {
     <div className="space-y-6">
       {/* Round Header */}
       <Card>
-        <CardHeader className="text-center pb-3">
-          <div className="flex items-center justify-center space-x-2 mb-2">
+        <CardHeader className="text-center pb-3 space-y-3">
+          <MarketSwitcher />
+          <div className="flex items-center justify-center space-x-2">
             <Badge variant="outline" className="text-sm">
               Round #{round.id}
             </Badge>
@@ -100,8 +126,8 @@ export function RoundDisplay() {
             )}
           </div>
           <CardTitle className="text-2xl">
-            Will ETH be above ${parseFloat(round.priceTarget).toLocaleString()}{' '}
-            ?
+            Will {selectedMarketSymbol?.split('/')[0]} be above $
+            {formatUSDUnits(BigInt(round.priceTarget), 8, 2)}?
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -136,7 +162,11 @@ export function RoundDisplay() {
                 Total Pool
               </div>
               <div className="text-2xl font-bold">
-                {parseFloat(formatEther(totalPool)).toFixed(4)} SOM
+                {parseFloat(formatEther(totalPool)).toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 4,
+                })}{' '}
+                STT
               </div>
             </div>
 
@@ -144,20 +174,33 @@ export function RoundDisplay() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-green-600 font-medium">
-                  YES: {parseFloat(formatEther(yesAmount)).toFixed(4)} SOM
+                  YES:{' '}
+                  {parseFloat(formatEther(yesAmount)).toLocaleString(
+                    undefined,
+                    {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 4,
+                    },
+                  )}{' '}
+                  STT
                 </span>
                 <span className="text-red-600 font-medium">
-                  NO: {parseFloat(formatEther(noAmount)).toFixed(4)} SOM
+                  NO:{' '}
+                  {parseFloat(formatEther(noAmount)).toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 4,
+                  })}{' '}
+                  STT
                 </span>
               </div>
 
-              <div className="relative h-4 bg-red-500 rounded-full overflow-hidden">
+              <div className="relative h-3 bg-muted rounded-full overflow-hidden">
                 <div
                   className="absolute left-0 top-0 h-full bg-green-500 transition-all duration-500"
                   style={{ width: `${yesPercentage}%` }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white drop-shadow">
+                  <span className="text-xs font-medium text-foreground/90">
                     {yesPercentage.toFixed(1)}% YES |{' '}
                     {(100 - yesPercentage).toFixed(1)}% NO
                   </span>
@@ -185,8 +228,11 @@ export function RoundDisplay() {
                       <span className="font-bold">
                         {parseFloat(
                           formatEther(BigInt(userBet.amount)),
-                        ).toFixed(4)}{' '}
-                        SOM
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 4,
+                        })}{' '}
+                        STT
                       </span>
                     </div>
                     {userBet.claimed && (

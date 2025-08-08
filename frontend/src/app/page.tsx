@@ -4,14 +4,10 @@ import { useAppSelector } from '@/hooks/useRedux'
 import { Header } from '@/components/features/Header'
 import { MarketArena } from '@/components/features/MarketArena'
 import { RoundDisplay } from '@/components/features/RoundDisplay'
-import { RoundHistory } from '@/components/features/RoundHistory'
 import { UserDashboard } from '@/components/features/UserDashboard'
 
 export default function HomePage() {
   const selectedTab = useAppSelector((state) => state.ui.selectedTab)
-  const selectedMarketId = useAppSelector(
-    (state) => state.market?.selectedMarketId,
-  )
 
   const renderContent = () => {
     switch (selectedTab) {
@@ -19,8 +15,6 @@ export default function HomePage() {
         return <MarketArena />
       case 'current':
         return <RoundDisplay />
-      case 'history':
-        return <RoundHistory marketId={Number(selectedMarketId ?? 1)} />
       case 'dashboard':
         return <UserDashboard />
       default:
@@ -29,15 +23,17 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="max-w-4xl mx-auto">{renderContent()}</div>
+      <main className="flex-1">
+        <div className="max-w-4xl container mx-auto px-4 py-6">
+          {renderContent()}
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-card/50 backdrop-blur-sm mt-12">
+      <footer className="mt-auto w-full border-t bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="text-center space-y-2">
             <div className="text-sm text-muted-foreground">

@@ -125,7 +125,7 @@ function MarketCard({ symbol, isSelected, onSelect }: MarketCardProps) {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total Pool</span>
                   <span className="font-medium">
-                    {parseFloat(getPoolTotal()).toFixed(2)} SOM
+                    {parseFloat(getPoolTotal()).toFixed(2)} STT
                   </span>
                 </div>
 
@@ -149,13 +149,13 @@ function MarketCard({ symbol, isSelected, onSelect }: MarketCardProps) {
                       {parseFloat(
                         formatUnits(BigInt(currentRound.totalYes), 18),
                       ).toFixed(1)}{' '}
-                      SOM
+                      STT
                     </span>
                     <span>
                       {parseFloat(
                         formatUnits(BigInt(currentRound.totalNo), 18),
                       ).toFixed(1)}{' '}
-                      SOM
+                      STT
                     </span>
                   </div>
                 </div>

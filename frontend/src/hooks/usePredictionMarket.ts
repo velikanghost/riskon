@@ -33,7 +33,7 @@ export function usePredictionMarket() {
     onLogs(logs) {
       logs.forEach((log) => {
         toast.success(
-          `Bet placed: ${log.args.amount} SOM on ${
+          `Bet placed: ${log.args.amount} STT on ${
             log.args.prediction ? 'YES' : 'NO'
           }`,
         )
