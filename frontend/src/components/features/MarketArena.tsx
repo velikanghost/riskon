@@ -10,6 +10,11 @@ import { useAppDispatch } from '@/hooks/useRedux'
 import { setSelectedTab } from '@/store/slices/uiSlice'
 import { SUPPORTED_MARKETS, MarketSymbol } from '@/types/market'
 import { formatUnits } from 'viem'
+import {
+  useWatchRiskonRoundResolvedEvent,
+  useWatchRiskonRoundStartedEvent,
+} from '@/lib/contracts-generated'
+import { RISKON_ADDRESS } from '@/lib/wagmi'
 
 interface MarketCardProps {
   symbol: MarketSymbol
@@ -195,20 +200,22 @@ export function MarketArena() {
     return () => clearInterval(id)
   }, [])
 
-  // Subscribe to SSE for round start/resolve
-  useEffect(() => {
-    const es = new EventSource('/api/stream')
-    es.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data)
-        if (msg?.type === 'round:start' || msg?.type === 'round:resolve') {
-          // refresh markets with current rounds
-          fetchMarkets(true)
-        }
-      } catch {}
-    }
-    return () => es.close()
-  }, [fetchMarkets])
+  // Watch on-chain events via HTTP polling (no WS)
+  useWatchRiskonRoundStartedEvent({
+    address: RISKON_ADDRESS,
+    poll: true,
+    onLogs() {
+      fetchMarkets(true)
+    },
+  })
+
+  useWatchRiskonRoundResolvedEvent({
+    address: RISKON_ADDRESS,
+    poll: true,
+    onLogs() {
+      fetchMarkets(true)
+    },
+  })
 
   useEffect(() => {
     fetchMarkets(true) // Fetch markets with rounds
