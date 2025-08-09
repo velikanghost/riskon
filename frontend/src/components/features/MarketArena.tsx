@@ -195,6 +195,21 @@ export function MarketArena() {
     return () => clearInterval(id)
   }, [])
 
+  // Subscribe to SSE for round start/resolve
+  useEffect(() => {
+    const es = new EventSource('/api/stream')
+    es.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data)
+        if (msg?.type === 'round:start' || msg?.type === 'round:resolve') {
+          // refresh markets with current rounds
+          fetchMarkets(true)
+        }
+      } catch {}
+    }
+    return () => es.close()
+  }, [fetchMarkets])
+
   useEffect(() => {
     fetchMarkets(true) // Fetch markets with rounds
   }, [])
