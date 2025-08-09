@@ -79,7 +79,7 @@ export interface TimeRemaining {
   total: number
 }
 
-export type TabType = 'markets' | 'current' | 'history' | 'dashboard'
+export type TabType = 'markets' | 'current' | 'history' | 'dashboard' | 'admin'
 
 // Wagmi and Web3 related types
 export interface WalletState {

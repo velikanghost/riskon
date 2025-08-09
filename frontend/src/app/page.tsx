@@ -5,6 +5,7 @@ import { Header } from '@/components/features/Header'
 import { MarketArena } from '@/components/features/MarketArena'
 import { RoundDisplay } from '@/components/features/RoundDisplay'
 import { UserDashboard } from '@/components/features/UserDashboard'
+import { AdminPanel } from '@/components/features/AdminPanel'
 
 export default function HomePage() {
   const selectedTab = useAppSelector((state) => state.ui.selectedTab)
@@ -17,6 +18,8 @@ export default function HomePage() {
         return <RoundDisplay />
       case 'dashboard':
         return <UserDashboard />
+      case 'admin':
+        return <AdminPanel />
       default:
         return <MarketArena />
     }

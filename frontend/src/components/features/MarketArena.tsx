@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useMarkets, useMarketPrice } from '@/hooks/useMarkets'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,9 +15,10 @@ interface MarketCardProps {
   symbol: MarketSymbol
   isSelected: boolean
   onSelect: (symbol: MarketSymbol) => void
+  now: number // epoch ms
 }
 
-function MarketCard({ symbol, isSelected, onSelect }: MarketCardProps) {
+function MarketCard({ symbol, isSelected, onSelect, now }: MarketCardProps) {
   const marketInfo = SUPPORTED_MARKETS[symbol]
   const { price, isLoading, error } = useMarketPrice(symbol)
   const { markets } = useMarkets()
@@ -43,13 +44,11 @@ function MarketCard({ symbol, isSelected, onSelect }: MarketCardProps) {
 
   const getTimeRemaining = () => {
     if (!currentRound || !currentRound.isActive) return null
-
-    const minutes = Math.floor(currentRound.timeRemaining / 60)
-    const seconds = currentRound.timeRemaining % 60
-
-    if (minutes > 0) {
-      return `${minutes}m ${seconds}s`
-    }
+    const nowSec = Math.floor(now / 1000)
+    const remaining = Math.max(0, Number(currentRound.endTime) - nowSec)
+    const minutes = Math.floor(remaining / 60)
+    const seconds = remaining % 60
+    if (minutes > 0) return `${minutes}m ${seconds}s`
     return `${seconds}s`
   }
 
@@ -195,6 +194,13 @@ export function MarketArena() {
     isLoadingMarkets,
   } = useMarkets()
 
+  // shared ticker for live countdowns
+  const [now, setNow] = useState<number>(Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
   useEffect(() => {
     fetchMarkets(true) // Fetch markets with rounds
   }, [])
@@ -257,6 +263,7 @@ export function MarketArena() {
             symbol={symbol as MarketSymbol}
             isSelected={selectedMarketSymbol === symbol}
             onSelect={handleSelectMarket}
+            now={now}
           />
         ))}
       </div>

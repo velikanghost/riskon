@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { useWriteRiskonClaimWinnings } from '@/lib/contracts-generated'
 import { RISKON_ADDRESS } from '@/lib/wagmi'
 import { Loader2 } from 'lucide-react'
+import { formatUSDUnits } from '@/lib/helpers'
 
 interface UserStatsCardProps {
   title: string
@@ -188,7 +189,7 @@ export function UserDashboard() {
         />
         <UserStatsCard
           title="Total Winnings"
-          value={`${parseFloat(stats.totalWinnings).toFixed(2)} STT`}
+          value={`${formatEther(BigInt(stats.totalWinnings))} STT`}
           subtitle="Lifetime earnings"
           className="bg-blue-50 border-blue-200"
         />
@@ -210,7 +211,7 @@ export function UserDashboard() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Wagered:</span>
               <span className="font-medium">
-                {parseFloat(stats.totalWagered).toFixed(2)} STT
+                {formatEther(BigInt(stats.totalWagered))} STT
               </span>
             </div>
             <div className="flex justify-between">
@@ -222,13 +223,13 @@ export function UserDashboard() {
                     : 'text-red-600'
                 }`}
               >
-                {parseFloat(stats.netProfit).toFixed(2)} STT
+                {formatEther(BigInt(stats.netProfit))} STT
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Average Bet:</span>
               <span className="font-medium">
-                {parseFloat(stats.averageBet).toFixed(2)} STT
+                {formatEther(BigInt(stats.averageBet))} STT
               </span>
             </div>
             <div className="flex justify-between">

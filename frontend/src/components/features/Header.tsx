@@ -6,20 +6,35 @@ import { setSelectedTab } from '@/store/slices/uiSlice'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TabType } from '@/types'
+import { useAccount } from 'wagmi'
 
 interface HeaderProps {
   className?: string
 }
 
+type NavTab = { key: TabType; label: string; badge?: string }
+
 export function Header({ className }: HeaderProps) {
   const dispatch = useAppDispatch()
   const selectedTab = useAppSelector((state) => state.ui.selectedTab)
+  const { address } = useAccount()
 
-  const tabs: { key: TabType; label: string; badge?: string }[] = [
+  const ADMIN_ADDRESSES = (process.env.NEXT_PUBLIC_ADMIN_ADDRESSES || '')
+    .split(',')
+    .map((a) => a.toLowerCase().trim())
+    .filter(Boolean)
+
+  const isAdmin = !!address && ADMIN_ADDRESSES.includes(address.toLowerCase())
+
+  const baseTabs: NavTab[] = [
     { key: 'markets', label: 'Markets' },
     { key: 'current', label: 'Current Round' },
     { key: 'dashboard', label: 'Dashboard', badge: 'My Bets' },
   ]
+
+  const tabs: NavTab[] = isAdmin
+    ? [...baseTabs, { key: 'admin' as TabType, label: 'Admin' }]
+    : baseTabs
 
   return (
     <header className={`border-b bg-card/50 backdrop-blur-sm ${className}`}>

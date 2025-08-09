@@ -2,14 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useAccount } from 'wagmi'
-import { formatEther } from 'viem'
-import {
-  useReadRiskonGetUserBet,
-  useReadRiskonCalculateWinnings,
-  useReadRiskonGetRoundOutcome,
-} from '@/lib/contracts-generated'
-import { RISKON_ADDRESS } from '@/lib/wagmi'
-import { SUPPORTED_MARKETS } from '@/types/market'
 
 interface UserStats {
   totalBets: number
@@ -34,7 +26,7 @@ interface UserBet {
   resolved?: boolean
 }
 
-export function useUserStats() {
+export function useUserStats(limit: number = 50) {
   const { address } = useAccount()
   const [stats, setStats] = useState<UserStats>({
     totalBets: 0,
@@ -49,131 +41,29 @@ export function useUserStats() {
   })
   const [userBets, setUserBets] = useState<UserBet[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Fetch user statistics from all markets
   const fetchUserStats = useCallback(async () => {
     if (!address) return
-
     setIsLoading(true)
+    setError(null)
     try {
-      const allBets: UserBet[] = []
-      let totalWinnings = 0n
-      const totalLosses = 0n
-      let totalWagered = 0n
-      let wins = 0
-      let losses = 0
-      let currentStreak = 0
-      let bestStreak = 0
+      const params = new URLSearchParams({ address, limit: String(limit) })
+      const res = await fetch(`/api/user/dashboard?${params.toString()}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (!data.success)
+        throw new Error(data.message || 'Failed to fetch dashboard')
 
-      // Check each market for user bets
-      for (const [symbol, marketInfo] of Object.entries(SUPPORTED_MARKETS)) {
-        const marketId = marketInfo.id
-
-        // Get current round info to know how many rounds to check
-        const currentRoundResponse = await fetch(
-          `/api/markets/${marketId}/rounds`,
-        )
-        if (!currentRoundResponse.ok) continue
-
-        const roundsData = await currentRoundResponse.json()
-        const maxRounds = roundsData.currentRoundId || 10 // Fallback to 10 rounds
-
-        // Check last 20 rounds for user bets
-        for (
-          let roundId = Math.max(1, maxRounds - 20);
-          roundId <= maxRounds;
-          roundId++
-        ) {
-          try {
-            // Get user bet for this round
-            const betData = await fetch(
-              `/api/user/bet?marketId=${marketId}&roundId=${roundId}&userAddress=${address}`,
-            )
-            if (!betData.ok) continue
-
-            const bet = await betData.json()
-            if (bet.amount === '0') continue
-
-            // Get round outcome
-            const outcomeData = await fetch(
-              `/api/rounds/${marketId}/${roundId}/outcome`,
-            )
-            if (!outcomeData.ok) continue
-
-            const outcome = await outcomeData.json()
-
-            const userBet: UserBet = {
-              marketId,
-              roundId,
-              amount: bet.amount,
-              prediction: bet.prediction,
-              claimed: bet.claimed,
-              outcome: outcome.resolved ? outcome.outcome : undefined,
-              resolved: outcome.resolved,
-            }
-
-            // Calculate winnings if round is resolved
-            if (outcome.resolved) {
-              const winningsData = await fetch(
-                `/api/user/winnings?marketId=${marketId}&roundId=${roundId}&userAddress=${address}`,
-              )
-              if (winningsData.ok) {
-                const winnings = await winningsData.json()
-                userBet.winnings = winnings.winnings
-
-                const betAmount = BigInt(bet.amount)
-                const winningsAmount = BigInt(winnings.winnings)
-
-                totalWagered += betAmount
-
-                if (winningsAmount > 0n) {
-                  totalWinnings += winningsAmount
-                  wins++
-                  currentStreak++
-                  bestStreak = Math.max(bestStreak, currentStreak)
-                } else {
-                  losses++
-                  currentStreak = 0
-                }
-              }
-            }
-
-            allBets.push(userBet)
-          } catch (error) {
-            console.error(
-              `Error fetching bet for market ${marketId}, round ${roundId}:`,
-              error,
-            )
-          }
-        }
-      }
-
-      // Calculate statistics
-      const totalBets = wins + losses
-      const winRate = totalBets > 0 ? (wins / totalBets) * 100 : 0
-      const averageBet =
-        totalBets > 0 ? formatEther(totalWagered / BigInt(totalBets)) : '0'
-      const netProfit = totalWinnings - totalLosses
-
-      setStats({
-        totalBets,
-        totalWinnings: formatEther(totalWinnings),
-        totalLosses: formatEther(totalLosses),
-        winRate,
-        winStreak: currentStreak,
-        bestStreak,
-        averageBet,
-        totalWagered: formatEther(totalWagered),
-        netProfit: formatEther(netProfit),
-      })
-
-      setUserBets(allBets)
-    } catch (error) {
-      console.error('Error fetching user stats:', error)
+      setStats(data.stats as UserStats)
+      setUserBets(data.userBets as UserBet[])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unknown error')
+      console.error('Error fetching user dashboard:', e)
     } finally {
       setIsLoading(false)
     }
-  }, [address])
+  }, [address, limit])
 
   useEffect(() => {
     fetchUserStats()
@@ -183,6 +73,7 @@ export function useUserStats() {
     stats,
     userBets,
     isLoading,
+    error,
     refetch: fetchUserStats,
   }
 }

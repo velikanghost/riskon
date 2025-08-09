@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 interface UiState {
   isLoading: boolean
   error: string | null
-  selectedTab: 'markets' | 'current' | 'history' | 'dashboard'
+  selectedTab: 'markets' | 'current' | 'history' | 'dashboard' | 'admin'
   showConnectModal: boolean
   notifications: Array<{
     id: string
