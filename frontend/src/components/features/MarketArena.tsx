@@ -36,10 +36,10 @@ function MarketCard({ symbol, isSelected, onSelect, now }: MarketCardProps) {
 
   const getPoolTotal = () => {
     if (!currentRound) return '0'
-    const totalYes = BigInt(currentRound.totalYes)
-    const totalNo = BigInt(currentRound.totalNo)
+    const totalYes = parseFloat(currentRound.totalYes || '0')
+    const totalNo = parseFloat(currentRound.totalNo || '0')
     const total = totalYes + totalNo
-    return formatUnits(total, 18)
+    return total.toString()
   }
 
   const getTimeRemaining = () => {
@@ -145,16 +145,10 @@ function MarketCard({ symbol, isSelected, onSelect, now }: MarketCardProps) {
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
-                      {parseFloat(
-                        formatUnits(BigInt(currentRound.totalYes), 18),
-                      ).toFixed(1)}{' '}
-                      STT
+                      {parseFloat(currentRound.totalYes || '0').toFixed(1)} STT
                     </span>
                     <span>
-                      {parseFloat(
-                        formatUnits(BigInt(currentRound.totalNo), 18),
-                      ).toFixed(1)}{' '}
-                      STT
+                      {parseFloat(currentRound.totalNo || '0').toFixed(1)} STT
                     </span>
                   </div>
                 </div>
