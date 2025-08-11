@@ -9,6 +9,7 @@ import {
   useCalculateWinnings,
 } from '@/hooks/useMultiMarketPrediction'
 import { useUserStats } from '@/hooks/useUserStats'
+import { formatOdds } from '@/hooks/useCurrentOdds'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -107,6 +108,9 @@ function BetRow({ marketId, roundId, userAddress }: BetRowProps) {
           {bet.prediction ? 'YES' : 'NO'}
         </Badge>
         <span className="text-sm font-medium">{betAmount.toFixed(4)} STT</span>
+        <span className="text-xs text-muted-foreground">
+          @{formatOdds(Number(bet.odds) / 1e18)}x
+        </span>
       </div>
 
       <div className="flex items-center space-x-3">

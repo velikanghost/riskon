@@ -4,6 +4,11 @@ import { useState } from 'react'
 import { useAccount, useBalance } from 'wagmi'
 import { parseEther, formatEther } from 'viem'
 import { useMultiMarketPrediction } from '@/hooks/useMultiMarketPrediction'
+import {
+  useCurrentOdds,
+  formatOdds,
+  calculatePotentialWinnings,
+} from '@/hooks/useCurrentOdds'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +32,7 @@ export function BettingForm({
   const { address, isConnected } = useAccount()
   const { data: balance } = useBalance({ address })
   const { placeBet, isPending } = useMultiMarketPrediction()
+  const { yesOdds, noOdds, isLoading: isLoadingOdds } = useCurrentOdds(marketId)
 
   const [betAmount, setBetAmount] = useState('')
   const [selectedPrediction, setSelectedPrediction] = useState<boolean | null>(
@@ -145,6 +151,11 @@ export function BettingForm({
                 <div className="text-xs opacity-80">
                   Price will be above target
                 </div>
+                {!isLoadingOdds && (
+                  <div className="text-xs font-medium mt-1">
+                    {formatOdds(yesOdds)}x
+                  </div>
+                )}
               </div>
             </Button>
             <Button
@@ -162,6 +173,11 @@ export function BettingForm({
                 <div className="text-xs opacity-80">
                   Price will be below target
                 </div>
+                {!isLoadingOdds && (
+                  <div className="text-xs font-medium mt-1">
+                    {formatOdds(noOdds)}x
+                  </div>
+                )}
               </div>
             </Button>
           </div>
@@ -258,9 +274,21 @@ export function BettingForm({
                   <span>Amount:</span>
                   <span className="font-medium">{betAmount} STT</span>
                 </div>
+                <div className="flex justify-between">
+                  <span>Odds:</span>
+                  <span className="font-medium">
+                    {formatOdds(selectedPrediction ? yesOdds : noOdds)}x
+                  </span>
+                </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Potential Return:</span>
-                  <span>Depends on final pool ratio</span>
+                  <span>Potential Winnings:</span>
+                  <span className="font-medium text-green-600">
+                    {calculatePotentialWinnings(
+                      parseFloat(betAmount),
+                      selectedPrediction ? yesOdds : noOdds,
+                    ).toFixed(4)}{' '}
+                    STT
+                  </span>
                 </div>
               </div>
             </CardContent>

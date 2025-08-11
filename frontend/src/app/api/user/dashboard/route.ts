@@ -143,6 +143,8 @@ export async function GET(request: NextRequest) {
       resolved: boolean
       outcome?: boolean
       winnings?: string
+      odds: string
+      timestamp: number
     }> = []
 
     let idx = 0
@@ -163,11 +165,8 @@ export async function GET(request: NextRequest) {
         idx++
 
         if (!betRes.result) continue
-        const [amount, prediction, claimed] = betRes.result as [
-          bigint,
-          boolean,
-          boolean,
-        ]
+        const [amount, prediction, claimed, odds, timestamp] =
+          betRes.result as [bigint, boolean, boolean, bigint, bigint]
         if (amount === 0n) continue
 
         const [resolved, outcome] = (outcomeRes.result || [false, false]) as [
@@ -185,6 +184,8 @@ export async function GET(request: NextRequest) {
           resolved,
           outcome: resolved ? outcome : undefined,
           winnings: winningsAmount ? winningsAmount.toString() : undefined,
+          odds: odds.toString(),
+          timestamp: Number(timestamp),
         })
 
         totalWagered += amount

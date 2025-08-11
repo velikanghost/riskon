@@ -40,6 +40,27 @@ export const riskonAbi = [
   {
     type: 'function',
     inputs: [],
+    name: 'MAX_ODDS',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'MIN_ODDS',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'PRECISION',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
     name: 'PROTOCOL_FEE',
     outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
@@ -68,6 +89,17 @@ export const riskonAbi = [
     name: 'addMarket',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'totalYes', internalType: 'uint256', type: 'uint256' },
+      { name: 'totalNo', internalType: 'uint256', type: 'uint256' },
+      { name: 'prediction', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'calculateOdds',
+    outputs: [{ name: 'odds', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -103,6 +135,16 @@ export const riskonAbi = [
     name: 'emergencyWithdraw',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_marketId', internalType: 'uint256', type: 'uint256' }],
+    name: 'getCurrentOdds',
+    outputs: [
+      { name: 'yesOdds', internalType: 'uint256', type: 'uint256' },
+      { name: 'noOdds', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -176,6 +218,8 @@ export const riskonAbi = [
       { name: 'amount', internalType: 'uint256', type: 'uint256' },
       { name: 'prediction', internalType: 'bool', type: 'bool' },
       { name: 'claimed', internalType: 'bool', type: 'bool' },
+      { name: 'odds', internalType: 'uint256', type: 'uint256' },
+      { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
     ],
     stateMutability: 'view',
   },
@@ -398,6 +442,12 @@ export const riskonAbi = [
       },
       {
         name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'odds',
         internalType: 'uint256',
         type: 'uint256',
         indexed: false,
@@ -777,6 +827,30 @@ export const useReadRiskonFeeDenominator = /*#__PURE__*/ createUseReadContract({
 })
 
 /**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"MAX_ODDS"`
+ */
+export const useReadRiskonMaxOdds = /*#__PURE__*/ createUseReadContract({
+  abi: riskonAbi,
+  functionName: 'MAX_ODDS',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"MIN_ODDS"`
+ */
+export const useReadRiskonMinOdds = /*#__PURE__*/ createUseReadContract({
+  abi: riskonAbi,
+  functionName: 'MIN_ODDS',
+})
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"PRECISION"`
+ */
+export const useReadRiskonPrecision = /*#__PURE__*/ createUseReadContract({
+  abi: riskonAbi,
+  functionName: 'PRECISION',
+})
+
+/**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"PROTOCOL_FEE"`
  */
 export const useReadRiskonProtocolFee = /*#__PURE__*/ createUseReadContract({
@@ -801,6 +875,14 @@ export const useReadRiskonRoundDuration = /*#__PURE__*/ createUseReadContract({
 })
 
 /**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"calculateOdds"`
+ */
+export const useReadRiskonCalculateOdds = /*#__PURE__*/ createUseReadContract({
+  abi: riskonAbi,
+  functionName: 'calculateOdds',
+})
+
+/**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"calculateWinnings"`
  */
 export const useReadRiskonCalculateWinnings =
@@ -808,6 +890,14 @@ export const useReadRiskonCalculateWinnings =
     abi: riskonAbi,
     functionName: 'calculateWinnings',
   })
+
+/**
+ * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"getCurrentOdds"`
+ */
+export const useReadRiskonGetCurrentOdds = /*#__PURE__*/ createUseReadContract({
+  abi: riskonAbi,
+  functionName: 'getCurrentOdds',
+})
 
 /**
  * Wraps __{@link useReadContract}__ with `abi` set to __{@link riskonAbi}__ and `functionName` set to `"getCurrentRoundInfo"`

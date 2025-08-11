@@ -12,6 +12,13 @@ export const PYTH_FEEDS = {
 
 export const HERMES_API_BASE = 'https://hermes.pyth.network'
 
+// USD increment configuration for each market
+export const MARKET_USD_INCREMENTS = {
+  'BTC/USD': 10, // $10 increment/decrement
+  'ETH/USD': 5, // $5 increment/decrement
+  'SOL/USD': 2, // $2 increment/decrement
+} as const
+
 export interface PythPriceData {
   id: string
   price: {

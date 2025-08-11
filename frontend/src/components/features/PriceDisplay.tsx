@@ -55,6 +55,10 @@ export function PriceDisplay({
   const percentageDiff =
     target > 0 ? ((difference / target) * 100).toFixed(2) : '0.00'
 
+  // Determine if target is above or below current price
+  const targetDirection = target > current ? 'above' : 'below'
+  const targetDistance = Math.abs(target - current)
+
   const priceColorClass = {
     up: 'text-green-500',
     down: 'text-red-500',
@@ -111,6 +115,26 @@ export function PriceDisplay({
             </div>
           )}
         </div>
+
+        {/* Target Price */}
+        {/* <div className="text-center border-t pt-4">
+          <div className="text-sm text-muted-foreground mb-1">
+            Target Priceee
+          </div>
+          <div className="text-2xl font-bold font-mono">
+            $
+            {target.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+          <div
+            className={`text-sm ${targetDirection === 'above' ? 'text-green-600' : 'text-red-600'}`}
+          >
+            {targetDirection === 'above' ? '↗' : '↘'} $
+            {targetDistance.toFixed(2)} {targetDirection}
+          </div>
+        </div> */}
       </div>
     </Card>
   )

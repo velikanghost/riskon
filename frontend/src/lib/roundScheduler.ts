@@ -8,6 +8,7 @@ import {
   startNewRound,
   getMarketsWithRounds,
 } from './priceKeeper'
+import { MARKET_USD_INCREMENTS } from './pythConfig'
 
 export interface SchedulerConfig {
   resolveCheckInterval: number // How often to check for rounds to resolve (ms)
@@ -32,7 +33,25 @@ const defaultPriceTargets = {
       if (!data.success || !data.price) {
         throw new Error('Invalid price data for BTC/USD')
       }
-      return Math.round(data.price * 1.002 * 100) / 100 // +0.2%
+
+      // Randomly choose direction: 50% above, 50% below
+      const isAbove = Math.random() >= 0.5
+      const usdIncrement = MARKET_USD_INCREMENTS['BTC/USD']
+
+      const targetPrice = isAbove
+        ? data.price + usdIncrement
+        : data.price - usdIncrement
+
+      // Debug logging
+      console.log('BTC/USD Round Creation:', {
+        currentPrice: data.price,
+        isAbove,
+        usdIncrement,
+        targetPrice,
+        direction: isAbove ? 'increment' : 'decrement',
+      })
+
+      return Math.round(targetPrice * 100) / 100
     } catch (error) {
       console.error('Error fetching BTC/USD price:', error)
       throw error
@@ -49,7 +68,25 @@ const defaultPriceTargets = {
       if (!data.success || !data.price) {
         throw new Error('Invalid price data for ETH/USD')
       }
-      return Math.round(data.price * 1.003 * 100) / 100 // +0.3%
+
+      // Randomly choose direction: 50% above, 50% below
+      const isAbove = Math.random() >= 0.5
+      const usdIncrement = MARKET_USD_INCREMENTS['ETH/USD']
+
+      const targetPrice = isAbove
+        ? data.price + usdIncrement
+        : data.price - usdIncrement
+
+      // Debug logging
+      console.log('ETH/USD Round Creation:', {
+        currentPrice: data.price,
+        isAbove,
+        usdIncrement,
+        targetPrice,
+        direction: isAbove ? 'increment' : 'decrement',
+      })
+
+      return Math.round(targetPrice * 100) / 100
     } catch (error) {
       console.error('Error fetching ETH/USD price:', error)
       throw error
@@ -66,7 +103,25 @@ const defaultPriceTargets = {
       if (!data.success || !data.price) {
         throw new Error('Invalid price data for SOL/USD')
       }
-      return Math.round(data.price * 1.004 * 100) / 100 // +0.4%
+
+      // Randomly choose direction: 50% above, 50% below
+      const isAbove = Math.random() >= 0.5
+      const usdIncrement = MARKET_USD_INCREMENTS['SOL/USD']
+
+      const targetPrice = isAbove
+        ? data.price + usdIncrement
+        : data.price - usdIncrement
+
+      // Debug logging
+      console.log('SOL/USD Round Creation:', {
+        currentPrice: data.price,
+        isAbove,
+        usdIncrement,
+        targetPrice,
+        direction: isAbove ? 'increment' : 'decrement',
+      })
+
+      return Math.round(targetPrice * 100) / 100
     } catch (error) {
       console.error('Error fetching SOL/USD price:', error)
       throw error
@@ -85,7 +140,7 @@ export class RoundScheduler {
   constructor(
     private config: SchedulerConfig = {
       resolveCheckInterval: 60000, // Check every minute
-      newRoundInterval: 300000, // New rounds every 5 minutes
+      newRoundInterval: 180000, // New rounds every 3 minutes
       enableAutoResolve: true,
       enableAutoNewRounds: true,
       priceTargets: defaultPriceTargets,

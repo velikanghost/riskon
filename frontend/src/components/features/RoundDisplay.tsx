@@ -13,7 +13,9 @@ import { formatEther } from 'viem'
 import { useAppDispatch } from '@/hooks/useRedux'
 import { setSelectedTab } from '@/store/slices/uiSlice'
 import { useMarkets } from '@/hooks/useMarkets'
-import { formatUSDUnits } from '@/lib/helpers'
+import { formatPriceDecimals, formatUSDUnits } from '@/lib/helpers'
+import { useMarketPrice } from '@/hooks/useMarkets'
+import { MARKET_USD_INCREMENTS } from '@/lib/pythConfig'
 
 export function RoundDisplay() {
   const dispatch = useAppDispatch()
@@ -26,6 +28,65 @@ export function RoundDisplay() {
   const marketId = BigInt(selectedMarketId || 1)
   const { round, isLoading, error } = useCurrentRound(marketId)
   const { bet: userBet } = useUserBet(marketId, BigInt(round?.id || 0), address)
+  const { price: currentPrice } = useMarketPrice(
+    selectedMarketSymbol || 'BTC/USD',
+  )
+
+  // Calculate prediction question
+  const getPredictionQuestion = () => {
+    if (!round || !currentPrice) return ''
+
+    const rawTargetPrice = BigInt(round.priceTarget)
+    const targetPrice = Number(rawTargetPrice) / 100000000 // Convert from 8-decimal format to USD
+    const current = currentPrice
+
+    // Get the USD increment for this market
+    const usdIncrement =
+      MARKET_USD_INCREMENTS[
+        selectedMarketSymbol as keyof typeof MARKET_USD_INCREMENTS
+      ] || 10
+
+    // Determine if this is an increment or decrement round
+    if (targetPrice > current) {
+      // This is an increment round - target is above current price
+      return `Will ${selectedMarketSymbol?.split('/')[0]} go above $${targetPrice.toFixed(2)}?`
+    } else {
+      // This is a decrement round - target is below current price
+      return `Will ${selectedMarketSymbol?.split('/')[0]} go below $${targetPrice.toFixed(2)}?`
+    }
+  }
+
+  // Get target direction indicator
+  const getTargetDirection = () => {
+    if (!round || !currentPrice) return null
+
+    const rawTargetPrice = BigInt(round.priceTarget)
+    const targetPrice = Number(rawTargetPrice) / 100000000 // Convert from 8-decimal format to USD
+    const current = currentPrice
+    const difference = Math.abs(targetPrice - current)
+
+    // Get the USD increment for this market
+    const usdIncrement =
+      MARKET_USD_INCREMENTS[
+        selectedMarketSymbol as keyof typeof MARKET_USD_INCREMENTS
+      ] || 10
+
+    if (targetPrice > current) {
+      return {
+        direction: 'above',
+        difference: usdIncrement, // Show the USD increment, not the full difference
+        color: 'text-green-600',
+        type: 'increment',
+      }
+    } else {
+      return {
+        direction: 'below',
+        difference: usdIncrement, // Show the USD increment, not the full difference
+        color: 'text-red-600',
+        type: 'decrement',
+      }
+    }
+  }
 
   // Quick market switcher
   const MarketSwitcher = () => (
@@ -125,10 +186,7 @@ export function RoundDisplay() {
               </Badge>
             )}
           </div>
-          <CardTitle className="text-2xl">
-            Will {selectedMarketSymbol?.split('/')[0]} be above $
-            {formatUSDUnits(BigInt(round.priceTarget), 8, 2)}?
-          </CardTitle>
+          <CardTitle className="text-2xl">{getPredictionQuestion()}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Timer and Price Display */}

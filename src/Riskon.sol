@@ -7,21 +7,30 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title Riskon
- * @dev A fast-paced multi-market prediction platform for binary outcomes with 5-minute rounds
+ * @dev A fast-paced multi-market prediction platform for binary outcomes with 3-minute rounds
  * @notice Users can bet on whether asset prices will be above or below target prices across multiple markets
  */
 contract Riskon is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant RESOLVER_ROLE = keccak256("RESOLVER_ROLE");
 
-    /// @dev Round duration in seconds (5 minutes)
-    uint256 public constant ROUND_DURATION = 5 minutes;
+    /// @dev Round duration in seconds (3 minutes)
+    uint256 public constant ROUND_DURATION = 3 minutes;
 
     /// @dev Protocol fee in basis points (200 = 2%)
     uint256 public constant PROTOCOL_FEE = 200;
 
     /// @dev Fee denominator (10000 = 100%)
     uint256 public constant FEE_DENOMINATOR = 10000;
+
+    /// @dev Precision for odds calculations (18 decimals)
+    uint256 public constant PRECISION = 1e18;
+
+    /// @dev Minimum odds (1.0x)
+    uint256 public constant MIN_ODDS = 1e18;
+
+    /// @dev Maximum odds (100x)
+    uint256 public constant MAX_ODDS = 100 * 1e18;
 
     /// @dev Minimum bet amount to prevent spam
     uint256 public minBetAmount = 0.01 ether;
@@ -57,6 +66,8 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
         uint256 amount;
         bool prediction;
         bool claimed;
+        uint256 odds; // Stored odds when bet was placed
+        uint256 timestamp; // When bet was placed
     }
 
     /// @dev Treasury address for protocol fees
@@ -94,7 +105,8 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
         uint256 indexed roundId,
         address indexed user,
         bool prediction,
-        uint256 amount
+        uint256 amount,
+        uint256 odds
     );
 
     event RoundResolved(
@@ -284,13 +296,24 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
             revert RoundAlreadyResolved();
         }
 
+        // Calculate odds BEFORE updating totals
+        uint256 currentOdds = calculateOdds(
+            round.totalYes,
+            round.totalNo,
+            _prediction
+        );
+
         if (round.bets[msg.sender].amount == 0) {
             round.bettors.push(msg.sender);
         }
 
+        // Store bet with current odds
         round.bets[msg.sender].amount += msg.value;
         round.bets[msg.sender].prediction = _prediction;
+        round.bets[msg.sender].odds = currentOdds;
+        round.bets[msg.sender].timestamp = block.timestamp;
 
+        // Update totals AFTER storing odds
         if (_prediction) {
             round.totalYes += msg.value;
         } else {
@@ -302,7 +325,8 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
             market.currentRoundId,
             msg.sender,
             _prediction,
-            msg.value
+            msg.value,
+            currentOdds
         );
     }
 
@@ -444,25 +468,43 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Get bet information for a user in a specific round
+     * @notice Get user bet information for a specific round
      * @param _marketId Market ID
      * @param _roundId Round ID
      * @param _user User address
      * @return amount Bet amount
-     * @return prediction User's prediction
+     * @return prediction User's prediction (true = YES, false = NO)
      * @return claimed Whether winnings have been claimed
+     * @return odds Odds at which the bet was placed
+     * @return timestamp When the bet was placed
      */
     function getUserBet(
         uint256 _marketId,
         uint256 _roundId,
         address _user
-    ) external view returns (uint256 amount, bool prediction, bool claimed) {
+    )
+        external
+        view
+        returns (
+            uint256 amount,
+            bool prediction,
+            bool claimed,
+            uint256 odds,
+            uint256 timestamp
+        )
+    {
         if (_marketId == 0 || _marketId >= nextMarketId) {
             revert InvalidMarketId();
         }
 
         Bet storage bet = rounds[_marketId][_roundId].bets[_user];
-        return (bet.amount, bet.prediction, bet.claimed);
+        return (
+            bet.amount,
+            bet.prediction,
+            bet.claimed,
+            bet.odds,
+            bet.timestamp
+        );
     }
 
     /**
@@ -515,6 +557,26 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
 
         Round storage round = rounds[_marketId][_roundId];
         return (round.resolved, round.outcome, round.finalPrice);
+    }
+
+    /**
+     * @notice Get current odds for a market
+     * @param _marketId Market ID
+     * @return yesOdds Current odds for YES prediction
+     * @return noOdds Current odds for NO prediction
+     */
+    function getCurrentOdds(
+        uint256 _marketId
+    ) external view returns (uint256 yesOdds, uint256 noOdds) {
+        if (_marketId == 0 || _marketId >= nextMarketId) {
+            revert InvalidMarketId();
+        }
+
+        Round storage round = rounds[_marketId][
+            markets[_marketId].currentRoundId
+        ];
+        yesOdds = calculateOdds(round.totalYes, round.totalNo, true);
+        noOdds = calculateOdds(round.totalYes, round.totalNo, false);
     }
 
     // Admin functions
@@ -583,6 +645,36 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
     }
 
     // Internal functions
+
+    /**
+     * @notice Calculate odds for a prediction
+     * @param totalYes Total amount bet on YES
+     * @param totalNo Total amount bet on NO
+     * @param prediction True for YES, false for NO
+     * @return odds Calculated odds with precision
+     */
+    function calculateOdds(
+        uint256 totalYes,
+        uint256 totalNo,
+        bool prediction
+    ) public pure returns (uint256 odds) {
+        uint256 totalPool = totalYes + totalNo;
+        uint256 sidePool = prediction ? totalYes : totalNo;
+
+        if (sidePool == 0) {
+            // First bet on this side gets 2.0x odds
+            return 2 * PRECISION;
+        }
+
+        // Calculate odds with precision
+        odds = (totalPool * PRECISION) / sidePool;
+
+        // Apply bounds
+        if (odds < MIN_ODDS) odds = MIN_ODDS;
+        if (odds > MAX_ODDS) odds = MAX_ODDS;
+
+        return odds;
+    }
 
     function _addMarket(
         string memory _symbol,
@@ -686,20 +778,13 @@ contract Riskon is AccessControl, ReentrancyGuard, Pausable {
             return 0;
         }
 
-        uint256 totalPool = round.totalYes + round.totalNo;
-        if (totalPool == 0) {
-            return 0;
-        }
+        // Calculate winnings based on stored odds
+        uint256 grossWinnings = (userBet.amount * userBet.odds) / PRECISION;
 
-        uint256 winningPool = round.outcome ? round.totalYes : round.totalNo;
-        if (winningPool == 0) {
-            return 0;
-        }
+        // Apply protocol fee
+        uint256 protocolFee = (grossWinnings * PROTOCOL_FEE) / FEE_DENOMINATOR;
 
-        uint256 protocolFee = (totalPool * PROTOCOL_FEE) / FEE_DENOMINATOR;
-        uint256 prizePool = totalPool - protocolFee;
-
-        return (userBet.amount * prizePool) / winningPool;
+        return grossWinnings - protocolFee;
     }
 
     /**

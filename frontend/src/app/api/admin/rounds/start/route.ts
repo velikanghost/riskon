@@ -3,7 +3,12 @@ import { createPublicClient, createWalletClient, http, parseUnits } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { somniaTestnet } from 'viem/chains'
 import { riskonAbi } from '@/lib/contracts-generated'
-import { PYTH_FEEDS, HERMES_API_BASE, formatPythPrice } from '@/lib/pythConfig'
+import {
+  PYTH_FEEDS,
+  HERMES_API_BASE,
+  formatPythPrice,
+  MARKET_USD_INCREMENTS,
+} from '@/lib/pythConfig'
 import { broadcast } from '@/lib/realtime'
 
 // Contract configuration
@@ -30,11 +35,11 @@ const createAdminClient = () => {
 }
 
 /**
- * Calculate price target with percentage increase
+ * Calculate price target with fixed USD increment/decrement
  */
 async function calculatePriceTarget(
   symbol: string,
-  increasePercentage: number,
+  usdIncrement: number,
 ): Promise<number> {
   try {
     const feedId = PYTH_FEEDS[symbol as keyof typeof PYTH_FEEDS]
@@ -61,8 +66,14 @@ async function calculatePriceTarget(
     }
 
     const currentPrice = formatPythPrice(priceData)
-    // Calculate target price with percentage increase
-    const targetPrice = currentPrice * (1 + increasePercentage / 100)
+
+    // Randomly choose direction: 50% above, 50% below
+    const isAbove = Math.random() >= 0.5
+
+    // Calculate target price with fixed USD increment/decrement
+    const targetPrice = isAbove
+      ? currentPrice + usdIncrement
+      : currentPrice - usdIncrement
 
     return Math.round(targetPrice * 100) / 100 // Round to 2 decimal places
   } catch (error) {
@@ -82,24 +93,17 @@ export async function POST(request: NextRequest) {
 
     // If symbol is provided, calculate price target automatically
     if (symbol && !priceTarget) {
-      const marketConfig: Record<string, { increase: number }> = {
-        'BTC/USD': { increase: 0.2 }, // 0.2% increase
-        'ETH/USD': { increase: 0.3 }, // 0.3% increase
-        'SOL/USD': { increase: 0.4 }, // 0.4% increase
-      }
+      const usdIncrement =
+        MARKET_USD_INCREMENTS[symbol as keyof typeof MARKET_USD_INCREMENTS]
 
-      const config = marketConfig[symbol]
-      if (!config) {
+      if (!usdIncrement) {
         return NextResponse.json(
-          { error: `No configuration for symbol: ${symbol}` },
+          { error: `No USD increment configuration for symbol: ${symbol}` },
           { status: 400 },
         )
       }
 
-      const calculatedTarget = await calculatePriceTarget(
-        symbol,
-        config.increase,
-      )
+      const calculatedTarget = await calculatePriceTarget(symbol, usdIncrement)
 
       // Convert price target to proper format (8 decimals for USD)
       const priceTargetWei = parseUnits(calculatedTarget.toString(), 8)

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Riskon - Real-time Prediction Market',
   description:
-    'Fast-paced binary prediction market on Somnia blockchain. Bet on ETH price movements in 5-minute rounds.',
+    'Fast-paced binary prediction market on Somnia blockchain. Bet on price movements in 3-minute rounds.',
   keywords: [
     'prediction market',
     'DeFi',

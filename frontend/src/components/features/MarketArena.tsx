@@ -15,6 +15,7 @@ import {
   useWatchRiskonRoundStartedEvent,
 } from '@/lib/contracts-generated'
 import { RISKON_ADDRESS } from '@/lib/wagmi'
+import { useCurrentOdds, formatOdds } from '@/hooks/useCurrentOdds'
 
 interface MarketCardProps {
   symbol: MarketSymbol
@@ -27,6 +28,11 @@ function MarketCard({ symbol, isSelected, onSelect, now }: MarketCardProps) {
   const marketInfo = SUPPORTED_MARKETS[symbol]
   const { price, isLoading, error } = useMarketPrice(symbol)
   const { markets } = useMarkets()
+  const {
+    yesOdds,
+    noOdds,
+    isLoading: isLoadingOdds,
+  } = useCurrentOdds(BigInt(marketInfo.id))
 
   const market = markets.find((m) => m.id === marketInfo.id)
   const currentRound = market?.currentRound
@@ -157,6 +163,19 @@ function MarketCard({ symbol, isSelected, onSelect, now }: MarketCardProps) {
                     </span>
                   </div>
                 </div>
+
+                {/* Current Odds */}
+                {!isLoadingOdds && (
+                  <div className="flex justify-between text-xs mt-2 pt-2 border-t">
+                    <span className="text-green-600 font-medium">
+                      {formatOdds(yesOdds)}x
+                    </span>
+                    <span className="text-muted-foreground">Current Odds</span>
+                    <span className="text-red-600 font-medium">
+                      {formatOdds(noOdds)}x
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center text-sm text-muted-foreground py-2">
@@ -265,7 +284,7 @@ export function MarketArena() {
         <div className="flex justify-center space-x-4 text-sm text-muted-foreground">
           <span>✨ Real-time prices</span>
           <span>•</span>
-          <span>⚡ 5-minute rounds</span>
+          <span>⚡ 3-minute rounds</span>
           <span>•</span>
           <span>🏆 Instant rewards</span>
         </div>

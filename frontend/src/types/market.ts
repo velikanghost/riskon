@@ -19,6 +19,17 @@ export interface RoundInfo {
   finalPrice?: string
   isActive: boolean
   timeRemaining: number
+  yesOdds?: number
+  noOdds?: number
+}
+
+export interface Bet {
+  roundId: number
+  amount: string
+  prediction: boolean
+  claimed: boolean
+  odds: string
+  timestamp: number
 }
 
 export interface MarketPrice {

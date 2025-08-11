@@ -2,7 +2,7 @@
 
 ## Overview
 
-Riskon is a fast-paced, real-time prediction market built for the Somnia blockchain. The smart contract system manages 5-minute binary prediction rounds where users bet on whether ETH price will be above or below a target price.
+Riskon is a fast-paced, real-time prediction market built for the Somnia blockchain. The smart contract system manages 3-minute binary prediction rounds where users bet on whether ETH price will be above or below a target price.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ Riskon is a fast-paced, real-time prediction market built for the Somnia blockch
 
 ### Key Features
 
-- 🚀 **5-minute rounds** with sub-second finality on Somnia
+- 🚀 **3-minute rounds** with sub-second finality on Somnia
 - 💰 **Binary predictions** (YES/NO) on ETH price movements
 - 🔒 **Security-first** design with access controls and reentrancy protection
 - ⚡ **Gas optimized** for high-frequency trading

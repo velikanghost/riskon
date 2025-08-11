@@ -43,7 +43,7 @@ export default function HomePage() {
               Riskon - Real-time Prediction Market on Somnia Blockchain
             </div>
             <div className="text-xs text-muted-foreground">
-              Fast-paced binary predictions with 5-minute rounds
+              Fast-paced binary predictions with 3-minute rounds
             </div>
             <div className="flex justify-center space-x-4 text-xs text-muted-foreground">
               <span>Sub-second finality</span>
