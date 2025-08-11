@@ -1,234 +1,182 @@
-# Riskon Smart Contracts
+# Riskon – Odds-Based On‑Chain Prediction Markets
 
 ## Overview
 
-Riskon is a fast-paced, real-time prediction market built for the Somnia blockchain. The smart contract system manages 3-minute binary prediction rounds where users bet on whether ETH price will be above or below a target price.
+Riskon is a fast, prediction market for crypto prices. Rounds last 3 minutes. At round start, the protocol fixes a USD target relative to the current price using a small, fixed increment/decrement (e.g., BTC ±$10, ETH ±$5, SOL ±$2). Users bet YES (price will be above target) or NO (below target) with STT. Payouts are determined by fixed odds captured at bet time.
 
-## Architecture
+Key highlights
 
-### Core Contracts
+- Odds-based payouts captured at bet time
+- Short 3-minute rounds for fast gameplay
+- Fixed USD increments for targets
+- Access-controlled admin actions with emergency pause
+- Built with Solidity + Foundry and a Next.js 15 frontend (Wagmi + viem)
 
-1. **PredictionMarket.sol** - Main contract managing rounds, bets, and payouts
-2. **IPriceOracle.sol** - Interface for price oracle integration
-3. **MockPriceOracle.sol** - Mock oracle for testing and development
+## Repository Structure
 
-### Key Features
+```
+.
+├── src/                    # Solidity contracts (Foundry)
+│   └── Riskon.sol          # Core contract
+├── script/                 # Foundry deployment & helper scripts
+├── test/                   # Foundry tests
+├── frontend/               # Next.js 15 app (Wagmi + viem)
+│   └── src/
+│       ├── app/            # App Router pages & API routes (backend)
+│       ├── components/     # UI & feature components
+│       ├── hooks/          # React hooks (wagmi/viem, odds, state)
+│       ├── lib/            # utils, config, contracts-generated.ts
+│       └── store/          # Redux Toolkit
+├── foundry.toml
+└── README.md
+```
 
-- 🚀 **3-minute rounds** with sub-second finality on Somnia
-- 💰 **Binary predictions** (YES/NO) on ETH price movements
-- 🔒 **Security-first** design with access controls and reentrancy protection
-- ⚡ **Gas optimized** for high-frequency trading
-- 📊 **Protocol fees** (2%) collected for treasury
-- 🛡️ **Emergency controls** for admin management
+---
 
-## Contract Details
+## Smart Contracts
 
-### PredictionMarket
+### Contract
 
-**Key Functions:**
+- File: `src/Riskon.sol`
+- Solidity: `^0.8.19`
+- Patterns: AccessControl, ReentrancyGuard, Pausable, checks-effects-interactions
 
-- `placeBet(bool prediction)` - Place YES/NO bet with ETH
-- `resolveRound(uint256 roundId)` - Resolve round using oracle price
-- `claimWinnings(uint256 roundId)` - Claim proportional winnings
-- `startNewRound(uint256 priceTarget)` - Start new prediction round
+### Game Mechanics
 
-**Security Features:**
+- Round duration: 3 minutes
+- Target selection: at round start, choose randomly to increment or decrement current price by a fixed USD amount per market
+  - Increments: `BTC/USD` $10, `ETH/USD` $5, `SOL/USD` $2 (8‑decimals on-chain)
+- Price decimals: USD prices use 8 decimals on-chain
+- Odds: calculated from current YES/NO totals at bet time; stored per bet and used for payouts
 
-- Access control with admin/resolver roles
-- Reentrancy protection on all external calls
-- Pausable functionality for emergency stops
-- Input validation and custom errors
+### Key Functions (selection)
 
-**Events:**
+- `startNewRound(uint256 priceTarget)` – Admin starts a new round with 8‑dec USD target
+- `placeBet(uint256 marketId, bool prediction)` – Bet YES/NO with `msg.value`
+- `getCurrentRoundInfo(uint256 marketId)` – Current round data
+- `getCurrentOdds(uint256 marketId)` – Current YES/NO odds
+- `getUserBet(uint256 marketId, uint256 roundId, address user)` – Returns `(amount, prediction, claimed, odds, timestamp)`
+- `calculateWinnings(uint256 marketId, uint256 roundId, address user)` – Potential winnings
+- `claimWinnings(uint256 marketId, uint256 roundId)` – Withdraw winnings
 
-- `RoundStarted` - New round created
-- `BetPlaced` - User placed bet
-- `RoundResolved` - Round outcome determined
-- `WinningsClaimed` - User claimed rewards
+### Roles & Security
 
-### MockPriceOracle
+- Roles: `ADMIN_ROLE`, `RESOLVER_ROLE`
+- Security: `ReentrancyGuard`, `Pausable`, custom errors, input validation
 
-**Key Functions:**
-
-- `setPrice(uint256 newPrice)` - Update price (testing only)
-- `getPrice()` - Get current price and timestamp
-- `isActive()` - Check if oracle is providing valid data
-
-## Deployment
-
-### Prerequisites
-
-1. Install Foundry: `curl -L https://foundry.paradigm.xyz | bash`
-2. Copy `config.example.env` to `.env` and configure:
-   ```bash
-   PRIVATE_KEY=your_private_key_without_0x
-   TREASURY_ADDRESS=your_treasury_address
-   ```
-
-### Deploy to Somnia Testnet
+### Build & Test (Foundry)
 
 ```bash
-# Build contracts
+# From repo root
 forge build
-
-# Run tests
-forge test
-
-# Deploy to Somnia testnet
-forge script script/Deploy.s.sol --rpc-url $SOMNIA_TESTNET_RPC --broadcast --verify
-```
-
-### Verification
-
-Contracts are automatically verified during deployment using the configured Etherscan API.
-
-## Interaction Scripts
-
-### Available Commands
-
-```bash
-# Display current round info
-forge script script/Interact.s.sol --rpc-url $SOMNIA_TESTNET_RPC
-
-# Start new round
-forge script script/Interact.s.sol --sig "startNewRound()" --rpc-url $SOMNIA_TESTNET_RPC --broadcast
-
-# Place bet
-forge script script/Interact.s.sol --sig "placeBet()" --rpc-url $SOMNIA_TESTNET_RPC --broadcast
-
-# Resolve round
-forge script script/Interact.s.sol --sig "resolveCurrentRound()" --rpc-url $SOMNIA_TESTNET_RPC --broadcast
-
-# Claim winnings
-forge script script/Interact.s.sol --sig "claimWinnings()" --rpc-url $SOMNIA_TESTNET_RPC --broadcast
-```
-
-### Configuration
-
-Update `.env` with interaction parameters:
-
-```bash
-NEW_PRICE_TARGET=300000000000  # $3000 USD (8 decimals)
-FINAL_PRICE=320000000000       # $3200 USD (8 decimals)
-BET_AMOUNT=1000000000000000000 # 1 ETH
-PREDICTION=true                # true for YES, false for NO
-ROUND_ID=1                     # Target round ID
-```
-
-## Testing
-
-### Test Coverage
-
-- ✅ **Unit Tests** - All core functions tested
-- ✅ **Fuzz Tests** - Random input validation
-- ✅ **Integration Tests** - End-to-end workflows
-- ✅ **Security Tests** - Access control and edge cases
-
-### Run Tests
-
-```bash
-# Run all tests
-forge test
-
-# Run with verbosity
 forge test -vvv
-
-# Run specific test
-forge test --match-test testPlaceBet
-
-# Gas report
-forge test --gas-report
-
-# Coverage report
-forge coverage
 ```
 
-## Security Considerations
+### Deployment (Somnia Testnet)
 
-### Implemented Protections
+Use this direct deployment command (no deploy script):
 
-1. **Access Control** - Role-based permissions using OpenZeppelin
-2. **Reentrancy Guards** - Protection on all external calls
-3. **Input Validation** - Custom errors for invalid inputs
-4. **Emergency Stops** - Pausable functionality for critical issues
-5. **Oracle Validation** - Active status and timestamp checks
-
-### Audit Recommendations
-
-1. External security audit before mainnet deployment
-2. Formal verification of mathematical calculations
-3. Economic analysis of game theory and incentives
-4. Stress testing with high transaction volumes
-
-## Gas Optimization
-
-- Packed structs for efficient storage
-- Events for off-chain data retrieval
-- Optimized loops and calculations
-- Custom errors instead of string reverts
-
-## Economics
-
-### Fee Structure
-
-- **Protocol Fee**: 2% of total pool
-- **Winner Share**: 98% distributed proportionally
-- **Minimum Bet**: 0.001 ETH (configurable)
-
-### Payout Formula
-
-```
-winnings = (user_bet_amount * prize_pool) / winning_pool_total
-where prize_pool = total_pool * 0.98
+```bash
+forge create src/Riskon.sol:Riskon \
+  --rpc-url https://rpc.ankr.com/somnia_testnet \
+  --broadcast \
+  --private-key <<private_key>> \
+  --constructor-args "<<treasury_address>>"
 ```
 
-## Integration Guide
+Notes
 
-### Frontend Integration
+- `<<private_key>>` should be without `0x`
+- `<<treasury_address>>` will receive protocol fees
+- After deploy, copy the deployed address into the frontend env (`NEXT_PUBLIC_RISKON_ADDRESS`)
 
-```solidity
-// Check current round
-(uint256 roundId, uint256 startTime, uint256 endTime,
- uint256 priceTarget, uint256 totalYes, uint256 totalNo,
- bool resolved) = predictionMarket.getCurrentRoundInfo();
+---
 
-// Place bet
-predictionMarket.placeBet{value: betAmount}(prediction);
+## Frontend (Next.js 15, Wagmi + viem)
 
-// Check user bet
-(uint256 amount, bool prediction, bool claimed) =
-  predictionMarket.getUserBet(roundId, userAddress);
+### Tech
 
-// Calculate potential winnings
-uint256 winnings = predictionMarket.calculateWinnings(roundId, userAddress);
+- Next.js 15 App Router, React 19
+- Wagmi + viem for contract reads/writes
+- Redux Toolkit for global state
+- TailwindCSS v4, shadcn/ui components
+- Next.js API routes (in `frontend/src/app/api`) serve as the backend for admin and data endpoints
+
+### Important Paths
+
+- Components: `frontend/src/components/features/*`
+- Hooks: `frontend/src/hooks/*` (e.g., `useMultiMarketPrediction`, `useCurrentOdds`)
+- Contract bindings: `frontend/src/lib/contracts-generated.ts` (auto‑generated)
+- Admin/API routes: `frontend/src/app/api/*` (e.g., `admin/rounds/start`, `admin/rounds/resolve`, `prices`, `user/*`)
+
+### Environment (.env) – Frontend
+
+Create `frontend/.env` and set:
+
+```env
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+NEXT_PUBLIC_RPC_URL=
+NEXT_PUBLIC_DEFAULT_CHAIN_ID=50312
+ADMIN_PRIVATE_KEY=
+NEXT_PUBLIC_RISKON_ADDRESS=
+NEXT_PUBLIC_ADMIN_ADDRESSES=
 ```
 
-### Event Monitoring
+Notes
 
-Monitor these events for real-time updates:
+- `NEXT_PUBLIC_RISKON_ADDRESS` is the deployed `Riskon` contract address
+- `NEXT_PUBLIC_ADMIN_ADDRESSES` is a comma-separated list of admin EOA addresses (for UI controls)
+- `ADMIN_PRIVATE_KEY` is used only by server/admin API routes if required (do not expose in client)
 
-- `RoundStarted` - New round created
-- `BetPlaced` - New bet placed
-- `RoundResolved` - Round outcome available
-- `WinningsClaimed` - Winnings claimed
+### Install, Generate, Build
+
+```bash
+cd frontend
+npm install
+
+# Generate wagmi/viem types from wagmi.config.ts
+npx wagmi generate
+
+# Build frontend
+npm run build
+
+# Run dev server
+npm run dev
+```
+
+If you change contract ABIs or addresses, re-run `npx wagmi generate`.
+
+---
+
+## Backend (API Routes inside Frontend)
+
+The project uses Next.js API routes as its backend for admin and data tasks:
+
+- `frontend/src/app/api/admin/rounds/start` – starts new rounds (uses fixed USD increments)
+- `frontend/src/app/api/admin/rounds/resolve` and `resolve/auto` – resolves rounds
+- `frontend/src/app/api/markets`, `prices` – market and price data
+- `frontend/src/app/api/user/*` – user dashboard, winnings, and bets
+
+Other libs/config
+
+- `frontend/src/lib/pythConfig.ts` – Pyth feed IDs and market USD increments
+- `frontend/src/lib/roundScheduler.ts` – round creation/resolution helper logic
+
+Database
+
+- There is no PostgreSQL/Prisma dependency in use; all state is on-chain and via API routes
+
+---
 
 ## Troubleshooting
 
-### Common Issues
+- After modifying `Riskon.sol`, regenerate frontend bindings: `cd frontend && npx wagmi generate`
+- Ensure `NEXT_PUBLIC_RISKON_ADDRESS` matches the latest deployed address
+- USD prices are handled with 8 decimals on-chain; ensure conversions use `BigInt(Math.round(usd * 1e8))`
+- If you see TypeScript tuple errors for contract reads, regenerate bindings and confirm the deployed contract matches the ABI
 
-1. **"RoundNotActive"** - Round has ended, wait for new round
-2. **"BetTooSmall"** - Increase bet amount above minimum
-3. **"NotWinner"** - User didn't predict correctly
-4. **"WinningsAlreadyClaimed"** - Rewards already withdrawn
-
-### Support
-
-For technical support or questions:
-
-- Review test files for usage examples
-- Check deployment logs for contract addresses
-- Verify environment configuration
+---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License – see `LICENSE`.

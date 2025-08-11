@@ -1,7 +1,6 @@
 docs
 misc.txt
 .cursor
-.cursorignore
 
 # Foundry build artifacts
 /out
@@ -34,8 +33,3 @@ foundry.toml.local
 
 # Test/coverage tools
 coverage.json
-
-###
-BLOCKSENSE_INTEGRATION.md
-DEPLOYMENT.md
-ODDS_IMPLEMENTATION_TODO.md
