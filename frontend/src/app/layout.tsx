@@ -17,14 +17,7 @@ export const metadata: Metadata = {
   title: 'Riskon - Real-time Prediction Market',
   description:
     'Fast-paced binary prediction market on Somnia blockchain. Bet on price movements in 3-minute rounds.',
-  keywords: [
-    'prediction market',
-    'DeFi',
-    'Somnia',
-    'blockchain',
-    'trading',
-    'ETH',
-  ],
+  keywords: ['prediction market', 'DeFi', 'Somnia', 'blockchain', 'trading'],
   authors: [{ name: 'Riskon Team' }],
   openGraph: {
     title: 'Riskon - Real-time Prediction Market',

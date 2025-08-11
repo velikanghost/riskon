@@ -172,12 +172,23 @@ export function useUserBet(
 
   return {
     bet: data
-      ? {
-          roundId: Number(roundId),
-          amount: data[0].toString(),
-          prediction: data[1],
-          claimed: data[2],
-        }
+      ? (() => {
+          const tuple = data as unknown as readonly [
+            bigint,
+            boolean,
+            boolean,
+            bigint?,
+            bigint?,
+          ]
+          return {
+            roundId: Number(roundId),
+            amount: tuple[0].toString(),
+            prediction: tuple[1],
+            claimed: tuple[2],
+            odds: (tuple[3] ?? 0n).toString(),
+            timestamp: Number(tuple[4] ?? 0n),
+          }
+        })()
       : null,
     isLoading,
     error,
